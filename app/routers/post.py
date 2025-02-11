@@ -1,7 +1,9 @@
 from fastapi import FastAPI,Response,status,HTTPException,Depends,APIRouter
 from sqlalchemy.orm import Session 
-from .. import models, schema,utils
-from .. databse import engine,get_db
+from typing import List
+from .. import models, schema,utils ,oauth2
+from .. databse import get_db
+#from .. import databse , schema ,models,utils ,oauth2
 
 router = APIRouter(
     prefix= "/posts",
@@ -10,7 +12,7 @@ router = APIRouter(
 
 
 @router.get("/",response_model= list[schema.Post])    
-def get_posts(db:Session = Depends(get_db)):
+def get_posts(db:Session = Depends(get_db),current_user:int = Depends(oauth2.get_current_user)):
     #cursor.execute("""select * from posts""")
     #posts = cursor.fetchall()
     posts = db.query(models.Post).all()
@@ -42,7 +44,8 @@ def create_posts(post: post):
     """
 
 @router.post("/",status_code=status.HTTP_201_CREATED, response_model= schema.Post)
-def create_posts(post: schema.PostCreate,db:Session = Depends(get_db)):
+def create_posts(post: schema.PostCreate,db:Session = Depends(get_db),current_user :int = Depends(oauth2.get_current_user)):
+    print(current_user.email)
     new_post = models.Post(**post.dict())  # it is used to add as many para meter you want idk why it is nit working 
     #new_post = models.Post(title= post.title, content = post.content,published = post.published)
     db.add(new_post)
@@ -51,7 +54,7 @@ def create_posts(post: schema.PostCreate,db:Session = Depends(get_db)):
     return  new_post
 
 @router.get("/{id}",response_model= schema.Post) ##{id} it is a path parameter 
-def get_post(id:int,db:Session = Depends(get_db)): #,response:Response use this when you use the response module 
+def get_post(id:int,db:Session = Depends(get_db),current_user :int = Depends(oauth2.get_current_user)): #,response:Response use this when you use the response module 
     #cursor.execute("""Select * from posts Where id = %s """,(str(id)))
     #post = cursor.fetchone()
     post= db.query(models.Post).filter(models.Post.id == id).first()
@@ -64,7 +67,7 @@ def get_post(id:int,db:Session = Depends(get_db)): #,response:Response use this 
 # deleting a post
 
 @router.delete("/{id}",status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id:int,db:Session = Depends(get_db)):
+def delete_post(id:int,db:Session = Depends(get_db),current_user :int = Depends(oauth2.get_current_user)):
 
     post = db.query(models.Post).filter(models.Post.id == id)
     if post.first() == None:
@@ -76,7 +79,7 @@ def delete_post(id:int,db:Session = Depends(get_db)):
 
 # Update post
 @router.put("/{id}",response_model= schema.Post)
-def update_post(id:int,updated_post:schema.PostCreate,db:Session = Depends(get_db)):
+def update_post(id:int,updated_post:schema.PostCreate,db:Session = Depends(get_db),current_user :int = Depends(oauth2.get_current_user)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
 
