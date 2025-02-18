@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List ,Optional
 from .. import models, schema,utils ,oauth2
 from .. databse import get_db
-#from .. import databse , schema ,models,utils ,oauth2
+from .. import databse , schema ,models,utils ,oauth2
+from sqlalchemy import func
 
 router = APIRouter(
     prefix= "/posts",
@@ -17,7 +18,9 @@ def get_posts(db:Session = Depends(get_db),current_user:int = Depends(oauth2.get
     #cursor.execute("""select * from posts""")
     #posts = cursor.fetchall()
     posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+    results = db.query(models.post, func.count(models.vote.post_id).label("Votes")).join(models.vote,models.vote.post_id == models.Post.id,isouter= True).group_by(models.Post.id).all()
+    
+    return results
 
 
 """@app.post("/createpost")
