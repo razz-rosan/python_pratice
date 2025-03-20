@@ -32,6 +32,7 @@ class Post(PostBase):
         orm_mode = True
 
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
